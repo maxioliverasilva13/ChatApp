@@ -20,7 +20,7 @@ app.use(cors())
 io.on("connection", (socket) => {
     console.log(socket.id)
 
-    socket.on("text", (message) => {
+    socket.on("message", (message) => {
         console.log(message)
         socket.broadcast.emit("message", {
             body: message,
