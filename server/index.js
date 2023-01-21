@@ -4,9 +4,18 @@ import { Server as SocketServer } from "socket.io"
 import http from "http"
 import cors from "cors"
 import { PORT } from "./config.js";
+import UserRoutes from "./routes/users.js";
+import { createConnection } from "typeorm";
+import bodyParser from "body-parser";
 
 const app = express();
 const server = http.createServer(app);
+
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+
+// parse application/json
+app.use(bodyParser.json())
 
 const io = new SocketServer(server, {
     cors: {
@@ -14,6 +23,7 @@ const io = new SocketServer(server, {
     }
 })
 
+const connection = await createConnection();
 app.use(morgan("dev"))
 app.use(cors())
 
@@ -28,6 +38,8 @@ io.on("connection", (socket) => {
         })
     })
 })
+
+app.use("/users", UserRoutes)
 
 server.listen(PORT)
 console.log("app listen in port", PORT);
