@@ -103,13 +103,13 @@ export const login = async (req = request, res = response) => {
         token: newToken,
       })
     }
-    
+
   } catch (error) {
-      console.log(error);
-      return res.json({
-        ok: false,
-        msg: "Error al iniciar sesion"
-      })
+    console.log(error);
+    return res.json({
+      ok: false,
+      msg: "Error al iniciar sesion"
+    })
   }
 }
 
@@ -117,6 +117,8 @@ export const checkToken = async (req = request, res = response) => {
 
   try {
     const { token } = req?.body;
+
+    console.log("token is", token)
     if (!token) {
       throw new Error("El token es invalido")
     }
@@ -132,20 +134,141 @@ export const checkToken = async (req = request, res = response) => {
     })
 
     return res.json({
-        ok: true,
-        isValid: true, 
-        userInfo: {
-          ...userFound,
-          password: null,
-        },
-      })
-    
+      ok: true,
+      isValid: true,
+      userInfo: {
+        ...userFound,
+        password: null,
+      },
+    })
+
   } catch (error) {
-      console.log(error);
-      return res.json({
-        ok: false,
-        isValid: false,
-        msg: "Error al checkear el token"
-      })
+    console.log(error);
+    return res.json({
+      ok: false,
+      isValid: false,
+      msg: "Error al checkear el token"
+    })
+  }
+}
+
+
+export const searchUser = async (req = request, res = response) => {
+
+  try {
+    const { query } = req?.query;
+
+    console.log("query is", query)
+
+    const filteredResults = await getRepository(User)
+      .createQueryBuilder("user")
+      .where("user.name like :name OR user.email like :email", { name: `%${query}%`, email: `%${query}%` })
+      .getMany();
+
+    return res.json({
+      ok: true,
+      results: filteredResults?.map((item) => {
+        return {
+          ...item,
+          password: null,
+        }
+      }),
+    })
+  } catch (error) {
+    console.log(error);
+    return res.json({
+      ok: false,
+      isValid: false,
+      msg: "Error al checkear el token"
+    })
+  }
+}
+
+const loadContactsFromToken = async (token) => {
+  const { id: meUserId } = jwt.verify(token, SECRET_SEED);
+
+  if (!meUserId) {
+    throw new Error("El id de el usuario es invalido")
+  }
+
+  const newListOfContacts = await getRepository("friends").createQueryBuilder("friends").where("friends.usersId_1 = :usersId_1", { usersId_1: meUserId }).getRawMany();
+
+  const contactsList = await Promise.all(newListOfContacts?.map(async (item) => {
+    const userId = item?.friends_usersId_2;
+    const userInfo = await getRepository(User).findOneBy({ id: userId })
+    return {
+      ...userInfo,
+      password: null,
+    };
+  }))
+
+  return contactsList;
+}
+
+
+export const loadContacts = async (req = request, res = response) => {
+
+  try {
+    const { token } = req?.headers;
+
+    const contactsList = await loadContactsFromToken(token);
+
+    return res.json({
+      ok: true,
+      contacts: contactsList
+    })
+  } catch (error) {
+    return res.json({
+      ok: false,
+      isValid: false,
+      msg: error?.message
+    })
+  }
+}
+
+export const addContact = async (req = request, res = response) => {
+
+  try {
+    const { userData } = req?.body;
+    const { token } = req?.headers;
+
+    if (!userData) {
+      throw new Error("Error al agregar un contacto")
+    }
+
+    const { id: meUserId } = jwt.verify(token, SECRET_SEED);
+    const newContactId = userData?.id;
+
+    if (!meUserId || !newContactId) {
+      throw new Error("El id de el usuario es invalido")
+    }
+
+    const alreadyAdded = await getRepository("friends").createQueryBuilder("friends").where("friends.usersId_1 = :usersId_1 AND friends.usersId_2 = :usersId_2", { usersId_1: meUserId, usersId_2: newContactId }).getCount()
+    console.log("alreadyAdded", alreadyAdded);
+
+    if (alreadyAdded >= 1) {
+      const response = await getRepository("friends").createQueryBuilder("friends").delete().where("friends.usersId_1 = :usersId_1 AND friends.usersId_2 = :usersId_2", { usersId_1: meUserId, usersId_2: newContactId }).execute();
+      console.log("response is", response)
+    } else {
+      await getRepository(User)
+        .createQueryBuilder("friends").insert().into("friends").values([
+          {
+            usersId_1: meUserId,
+            usersId_2: newContactId,
+          },
+        ]).execute();
+    }
+
+    const newContactsList = await loadContactsFromToken(token);
+    return res.json({
+      ok: true,
+      contacts: newContactsList,
+    })
+  } catch (error) {
+    return res.json({
+      ok: false,
+      isValid: false,
+      msg: error?.message
+    })
   }
 }

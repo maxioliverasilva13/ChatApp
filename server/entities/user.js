@@ -27,18 +27,12 @@ export const User = new EntitySchema({
     },
   },
   relations: {
-    // rol: {
-    //   type: "many-to-one",
-    //   target: "rol",
-    //   joinColumn: true,
-    // },
-    // localidad: {
-    //   type: "many-to-one",
-    //   target: "localidad",
-    //   joinColumn: true,
-    //   cascade: true,
-    //   nullable: true,
-    //   onDelete: "SET NULL",
-    // },
+    users: {
+      type: "many-to-many",
+      joinTable: {
+        name: "friends",
+      },
+      target: "users",
+    },
   },
 });
