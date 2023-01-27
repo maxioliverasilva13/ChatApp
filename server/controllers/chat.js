@@ -64,11 +64,10 @@ export const getMessages = async (req = request, res = response) => {
             if (!listOfUsers[msg?.chats_from]) {
                 listOfUsers[msg?.chats_from] = null;
                 // newListOfMessages[msg?.chats_from] = null;
-            } else {
-                if (!listOfUsers[msg?.chats_to]) {
-                    listOfUsers[msg?.chats_to] = null;
-                    // newListOfMessages[msg?.chats_from] = null;
-                }
+            }
+            if (!listOfUsers[msg?.chats_to]) {
+                listOfUsers[msg?.chats_to] = null;
+                // newListOfMessages[msg?.chats_from] = null;
             }
         })
 

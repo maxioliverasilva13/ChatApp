@@ -10,6 +10,10 @@ export const User = new EntitySchema({
       type: "int",
       generated: true,
     },
+    isOnline: {
+      type: "boolean",
+      default: false,
+    },
     name: {
       type: "varchar",
     },
