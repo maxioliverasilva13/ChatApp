@@ -118,7 +118,6 @@ export const checkToken = async (req = request, res = response) => {
   try {
     const { token } = req?.body;
 
-    console.log("token is", token)
     if (!token) {
       throw new Error("El token es invalido")
     }

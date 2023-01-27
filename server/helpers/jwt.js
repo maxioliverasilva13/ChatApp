@@ -18,3 +18,29 @@ export const generateJWT = (id, name) => {
     })
 
 }
+
+
+export const validateJwt = async (req, res, next) => {
+
+    try {
+        const { token } = req?.headers;
+
+        if (!token) {
+            throw new Error("El token es invalido")
+        }
+
+        const { id, exp } = jwt.verify(token, SECRET_SEED);
+        const isExpired = Date.now() >= exp * 1000;
+        if (isExpired) {
+            throw new Error("El token no es valido")
+        }
+
+        next();
+    } catch (error) {
+        return res.json({
+            ok: false,
+            isValid: false,
+            msg: "Error al checkear el token"
+        })
+    }
+}
