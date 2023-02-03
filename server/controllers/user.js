@@ -183,6 +183,48 @@ export const searchUser = async (req = request, res = response) => {
   }
 }
 
+
+export const handleChangeUserStatus = async (uid, status) => {
+  const user = await getRepository(User).findOneBy({ id: uid });
+
+  if (!user) {
+    return new Error("User not found");
+  }
+
+  await getRepository(User).update({
+    id: uid
+  }, {
+    ...user,
+    isOnline: status,
+  })
+}
+
+
+export const changeUserStatus = async (req = request, res = response) => {
+
+  try {
+    const { status } = req?.body;
+    const { token } = req?.headers;
+
+    const { id } = jwt.verify(token, SECRET_SEED);
+
+    hnadleChangeUserStatus(id, status)
+
+    return res.json({
+      ok: true,
+      msg: "Estado actualizado"
+    })
+  } catch (error) {
+    console.log(error);
+    return res.json({
+      ok: false,
+      isValid: false,
+      msg: "Error al checkear el token"
+    })
+  }
+}
+
+
 const loadContactsFromToken = async (token) => {
   const { id: meUserId } = jwt.verify(token, SECRET_SEED);
 
