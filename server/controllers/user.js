@@ -225,6 +225,40 @@ export const changeUserStatus = async (req = request, res = response) => {
 }
 
 
+export const handleChangeUserInfo = async (req = request, res = response) => {
+
+  try {
+    const { userInfo } = req?.body;
+    const { token } = req?.headers;
+
+    const { id } = jwt.verify(token, SECRET_SEED);
+
+    if (!user || !userInfo) {
+      return new Error("User not found");
+    }
+
+    await getRepository(User).update({
+      id: uid
+    }, {
+      ...user,
+      ...userInfo,
+    })
+
+    return res.json({
+      ok: true,
+      msg: "Usuario actualizado"
+    })
+  } catch (error) {
+    console.log(error);
+    return res.json({
+      ok: false,
+      isValid: false,
+      msg: "Error al checkear el token"
+    })
+  }
+}
+
+
 const loadContactsFromToken = async (token) => {
   const { id: meUserId } = jwt.verify(token, SECRET_SEED);
 
