@@ -53,6 +53,11 @@ export const createUser = async (req = request, res = response) => {
           email: req?.body?.email,
           name: req?.body?.name,
           photo: req?.body?.image,
+          apellido: req?.body?.apellido,
+          ciudad: req?.body?.ciudad,
+          direccion: req?.body?.direccion,
+          telefono: req?.body?.telefono,
+          pais: req?.body?.pais,
         });
         const resultado = await getRepository(User).save(Newuser);
         const token = await generateJWT(resultado.id, resultado.email);
