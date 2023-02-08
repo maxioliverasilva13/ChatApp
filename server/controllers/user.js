@@ -233,12 +233,13 @@ export const handleChangeUserInfo = async (req = request, res = response) => {
 
     const { id } = jwt.verify(token, SECRET_SEED);
 
-    if (!user || !userInfo) {
+    if (!id || !userInfo) {
       return new Error("User not found");
     }
+    const user = await getRepository(User).findOneBy({ id: id });
 
     await getRepository(User).update({
-      id: uid
+      id: id
     }, {
       ...user,
       ...userInfo,
@@ -249,7 +250,6 @@ export const handleChangeUserInfo = async (req = request, res = response) => {
       msg: "Usuario actualizado"
     })
   } catch (error) {
-    console.log(error);
     return res.json({
       ok: false,
       isValid: false,

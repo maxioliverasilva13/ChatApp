@@ -13,6 +13,4 @@ router.get("/loadContacts", loadContacts);
 router.post("/changeUserStatus", changeUserStatus);
 router.post("/changeUserInfo", handleChangeUserInfo);
 
-
-
 export default router;
