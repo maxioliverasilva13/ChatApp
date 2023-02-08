@@ -29,6 +29,21 @@ export const User = new EntitySchema({
       type: "varchar",
       unique: true,
     },
+    apellido: {
+      type: "varchar",
+    },
+    direccion: {
+      type: "varchar",
+    },
+    ciudad: {
+      type: "varchar",
+    },
+    telefono: {
+      type: "varchar",
+    },
+    pais: {
+      type: "varchar",
+    },
   },
   relations: {
     users: {
