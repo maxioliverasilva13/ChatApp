@@ -40,7 +40,6 @@ export const createMessage = async (req = request, res = response) => {
             },
         })
     } catch (error) {
-        console.log(error)
         return res.json({ ok: false, msg: "Contacte con el desarrollador" });
     }
 };

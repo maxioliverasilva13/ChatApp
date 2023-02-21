@@ -57,9 +57,6 @@ io.sockets.on("connection", (socket) => {
         })
 
         socket.on('addUserConnections', async (data) => {
-            if (data === 2 || data === "2") {
-                console.log("se conecto el usuario 2 con el socket id", socket.id)
-            }
             connected_users_keys_pair?.push({
                 clientId: data,
                 socketId: socket?.id,
@@ -77,18 +74,20 @@ io.sockets.on("connection", (socket) => {
         });
 
         socket.on('desconectar', async (uid) => {
-            handleChangeUserStatus(uid, false)
-            connected_users_keys_pair = connected_users_keys_pair?.filter((item) => item?.clientId !== uid)
-            const myFriends = await getRepository("friends").createQueryBuilder("friends").where("friends.usersId_1 = :usersId_1", { usersId_1: uid }).getRawMany();
-            connected_users_keys_pair?.forEach((item) => {
-                if (myFriends?.find(u => u?.friends_usersId_2 === item?.clientId)) {
-                    socket?.to(item?.socketId)?.emit("changeUserConnectedFalse", uid);
-                }
-            })
+            if (uid) {
+                handleChangeUserStatus(uid, false)
+                connected_users_keys_pair = connected_users_keys_pair?.filter((item) => item?.clientId !== uid)
+                const myFriends = await getRepository("friends").createQueryBuilder("friends").where("friends.usersId_1 = :usersId_1", { usersId_1: uid }).getRawMany();
+                connected_users_keys_pair?.forEach((item) => {
+                    if (myFriends?.find(u => u?.friends_usersId_2 === item?.clientId)) {
+                        socket?.to(item?.socketId)?.emit("changeUserConnectedFalse", uid);
+                    }
+                })
+            }
+
 
         });
     } catch (error) {
-        console.log("error in socket io", error)
     }
 })
 
@@ -96,4 +95,3 @@ app.use("/users", UserRoutes)
 app.use("/chats", ChatRoutes)
 
 server.listen(PORT)
-console.log("app listen in port", PORT);

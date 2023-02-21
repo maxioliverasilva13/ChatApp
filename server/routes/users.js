@@ -1,5 +1,5 @@
 import express from "express"
-import { addContact, changeUserStatus, checkToken, createUser, getUsers, handleChangeUserInfo, loadContacts, login, searchUser } from "../controllers/user.js"
+import { addContact, changeUserStatus, checkToken, createUser, getUsers, handleChangeUserInfo, loadContacts, login, searchUser, loadRequestlyFriends, acceptContactOrDelete } from "../controllers/user.js"
 
 const router = express.Router();
 
@@ -12,5 +12,8 @@ router.post("/addContact", addContact);
 router.get("/loadContacts", loadContacts);
 router.post("/changeUserStatus", changeUserStatus);
 router.post("/changeUserInfo", handleChangeUserInfo);
+router.get("/loadRequestlyFriends", loadRequestlyFriends);
+router.get("/acceptContactOrDelete", acceptContactOrDelete);
+
 
 export default router;

@@ -271,7 +271,7 @@ const loadContactsFromToken = async (token) => {
     throw new Error("El id de el usuario es invalido")
   }
 
-  const newListOfContacts = await getRepository("friends").createQueryBuilder("friends").where("friends.usersId_1 = :usersId_1", { usersId_1: meUserId }).getRawMany();
+  const newListOfContacts = await getRepository("friendsDate").createQueryBuilder("friendsDate").where("friendsDate.usersId_1 = :usersId_1", { usersId_1: meUserId }).getRawMany();
 
   const contactsList = await Promise.all(newListOfContacts?.map(async (item) => {
     const userId = item?.friends_usersId_2;
@@ -285,6 +285,47 @@ const loadContactsFromToken = async (token) => {
   return contactsList;
 }
 
+const loadSolicitudesDeAmistad = async (token) => {
+  const { id: meUserId } = jwt.verify(token, SECRET_SEED);
+
+  if (!meUserId) {
+    throw new Error("El id de el usuario es invalido")
+  }
+
+  const meListOfRequestlyUsers = await getRepository("friendsDate").query(`SELECT * FROM friendsdate AS fd WHERE fd.usersId_2=${meUserId} and not EXISTS(SELECT * FROM friendsdate WHERE usersId_1=${meUserId} )`);
+
+  const contactsList = await Promise.all(meListOfRequestlyUsers?.map(async (item) => {
+    const userId = item?.usersId_1;
+    const userInfo = await getRepository(User).findOneBy({ id: userId })
+    return {
+      ...userInfo,
+      password: null,
+      ...item,
+    };
+  }))
+
+  return contactsList;
+}
+
+export const loadRequestlyFriends = async (req = request, res = response) => {
+
+  try {
+    const { token } = req?.headers;
+
+    const contactsList = await loadSolicitudesDeAmistad(token);
+
+    return res.json({
+      ok: true,
+      contacts: contactsList
+    })
+  } catch (error) {
+    return res.json({
+      ok: false,
+      isValid: false,
+      msg: error?.message
+    })
+  }
+}
 
 export const loadContacts = async (req = request, res = response) => {
 
@@ -323,15 +364,13 @@ export const addContact = async (req = request, res = response) => {
       throw new Error("El id de el usuario es invalido")
     }
 
-    const alreadyAdded = await getRepository("friends").createQueryBuilder("friends").where("friends.usersId_1 = :usersId_1 AND friends.usersId_2 = :usersId_2", { usersId_1: meUserId, usersId_2: newContactId }).getCount()
-    console.log("alreadyAdded", alreadyAdded);
+    const alreadyAdded = await getRepository("friendsDate").createQueryBuilder("friendsDate").where("friendsDate.usersId_1 = :usersId_1 AND friendsDate.usersId_2 = :usersId_2", { usersId_1: meUserId, usersId_2: newContactId }).getCount()
 
     if (alreadyAdded >= 1) {
-      const response = await getRepository("friends").createQueryBuilder("friends").delete().where("friends.usersId_1 = :usersId_1 AND friends.usersId_2 = :usersId_2", { usersId_1: meUserId, usersId_2: newContactId }).execute();
-      console.log("response is", response)
+      const response = await getRepository("friendsDate").createQueryBuilder("friendsDate").delete().where("friendsDate.usersId_1 = :usersId_1 AND friendsDate.usersId_2 = :usersId_2", { usersId_1: meUserId, usersId_2: newContactId }).execute();
     } else {
       await getRepository(User)
-        .createQueryBuilder("friends").insert().into("friends").values([
+        .createQueryBuilder("friendsDate").insert().into("friendsDate").values([
           {
             usersId_1: meUserId,
             usersId_2: newContactId,
@@ -343,6 +382,43 @@ export const addContact = async (req = request, res = response) => {
     return res.json({
       ok: true,
       contacts: newContactsList,
+    })
+  } catch (error) {
+    return res.json({
+      ok: false,
+      isValid: false,
+      msg: error?.message
+    })
+  }
+}
+
+
+export const acceptContactOrDelete = async (req = request, res = response) => {
+
+  try {
+    const { usersId_2, usersId_1, accept } = req?.body;
+    const { token } = req?.headers;
+
+    if (!usersId_2 || !usersId_1) {
+      throw new Error("El id de el usuario es invalido")
+    }
+
+    if (!accept) {
+      await getRepository("friendsDate").createQueryBuilder("friendsDate").delete().where("friendsDate.usersId_1 = :usersId_1 AND friendsDate.usersId_2 = :usersId_2", { usersId_1: usersId_1, usersId_2: usersId_2 }).execute();
+    } else {
+      await getRepository(User)
+        .createQueryBuilder("friendsDate").insert().into("friendsDate").values([
+          {
+            usersId_1: usersId_2,
+            usersId_2: usersId_1,
+          },
+        ]).execute();
+    }
+
+    const newContactsList = await loadContactsFromToken(token);
+    return res.json({
+      ok: true,
+      newContacts: newContactsList,
     })
   } catch (error) {
     return res.json({
